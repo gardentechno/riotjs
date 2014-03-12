@@ -93,32 +93,31 @@ if (typeof top != "object") return;
 
 var currentHash,
   pops = $.observable({}),
-  listen = window.addEventListener,
   doc = document;
 
 function pop(hash) {
-  hash = hash.type ? location.hash : hash;
-  if (hash != currentHash) pops.trigger("pop", hash);
+  if (typeof hash != "string")
+    hash = window.location.hash;
+  if (hash.charAt(0) == '#')
+    hash = hash.substring(1);
+  if (hash != currentHash)
+    pops.trigger("pop", hash);
   currentHash = hash;
 }
 
-if (listen) {
-  listen("popstate", pop, false);
-  doc.addEventListener("DOMContentLoaded", pop, false);
+jQuery(window).bind('hashchange', pop);
+jQuery(pop);
 
-} else {
-  doc.attachEvent("onreadystatechange", function() {
-    if (doc.readyState === "complete") pop("");
-  });
-}
-
-// Change the browser URL or listen to changes on the URL
+// Change the browser hash
 $.route = function(to) {
-  // listen
-  if (typeof to === "function") return pops.on("pop", to);
+  if (typeof to === "function")
+    return pops.on("pop", to);
 
-  // fire
-  if (history.pushState) history.pushState(0, 0, to);
-  pop(to);
+  to = to.substring(to.indexOf("#"), to.length);
+  window.location.hash = to;
 
-};})(typeof top == "object" ? window.$ || (window.$ = {}) : exports);
+  if (!("onhashchange" in window)) {
+    pop(to);
+  }
+};
+})(typeof top == "object" ? window.$ || (window.$ = {}) : exports);
